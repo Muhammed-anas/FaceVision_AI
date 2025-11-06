@@ -5,40 +5,256 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FaceVision AI - Live Camera</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        #video { width: 60%; border: 2px solid #444; border-radius: 10px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            margin: 20px auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #video { 
+            width: 100%; 
+            max-width: 640px;
+            border: 3px solid #667eea; 
+            border-radius: 15px; 
+            background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        #startBtn {
+            background: #4CAF50;
+            color: white;
+        }
+        #startBtn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        #stopBtn {
+            background: #f44336;
+            color: white;
+        }
+        #stopBtn:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+        #restartBtn {
+            background: #ff9800;
+            color: white;
+        }
+        #restartBtn:hover {
+            background: #e68900;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
         #result-box {
-            margin-top: 20px;
+            margin: 20px auto;
             display: inline-block;
             text-align: left;
             font-size: 18px;
-            border: 1px solid #999;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            background: #f9f9f9;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .result-value {
+            color: #333;
+            font-weight: 500;
+        }
+        .status-ok { color: #4CAF50; font-weight: bold; }
+        .status-error { color: #f44336; font-weight: bold; }
+        .status-processing { color: #ff9800; font-weight: bold; }
+        #raw {
+            white-space: pre-wrap; 
+            font-size: 11px; 
+            color: #666; 
+            margin-top: 15px; 
+            border-top: 2px solid #e0e0e0; 
+            padding-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .indicator.active {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        .indicator.inactive {
+            background: #ccc;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
             padding: 15px;
-            border-radius: 10px;
-            width: 300px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        .info-box ol {
+            margin: 5px 0;
+            padding-left: 20px;
         }
     </style>
 </head>
 <body>
-    <h2>🎥 FaceVision AI – Live Analytics</h2>
+    <div class="container">
+        <h2>🎥 FaceVision AI – Live Analytics</h2>
 
-    <video id="video" autoplay></video>
+        <div class="info-box" id="setupInfo">
+            <h4>⚠️ Setup Instructions:</h4>
+            <ol>
+                <li>Start AI Service: <code>cd ai_service && python manage.py runserver 8001</code></li>
+                <li>Start Main Backend: <code>cd backend && python manage.py runserver 8000</code></li>
+                <li>Allow camera access when prompted</li>
+                <li>Click "Start Analysis" button</li>
+            </ol>
+        </div>
 
-    <div id="result-box">
-        <p><strong>Status:</strong> <span id="status">Initializing...</span></p>
-        <p><strong>Age:</strong> <span id="age">-</span></p>
-        <p><strong>Gender:</strong> <span id="gender">-</span></p>
-        <p><strong>Emotion:</strong> <span id="emotion">-</span></p>
-        <pre id="raw" style="white-space:pre-wrap; font-size:12px; color:#555; margin-top:10px; border-top:1px solid #ccc; padding-top:10px;"></pre>
+        <video id="video" autoplay playsinline muted></video>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startAnalysis()">▶️ Start Analysis</button>
+            <button id="stopBtn" onclick="stopAnalysis()" disabled>⏹️ Stop Analysis</button>
+            <button id="restartBtn" onclick="restartAnalysis()">🔄 Restart</button>
+        </div>
+
+        <div id="result-box">
+            <div class="result-item">
+                <span class="result-label">Status:</span>
+                <span class="result-value">
+                    <span class="indicator inactive" id="indicator"></span>
+                    <span id="status">Waiting to start...</span>
+                </span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Age:</span>
+                <span class="result-value" id="age">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Gender:</span>
+                <span class="result-value" id="gender">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Emotion:</span>
+                <span class="result-value" id="emotion">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Captures:</span>
+                <span class="result-value" id="captureCount">0</span>
+            </div>
+            <pre id="raw"></pre>
+        </div>
     </div>
 
     <script>
         const video = document.getElementById('video');
+        const statusEl = document.getElementById('status');
+        const indicatorEl = document.getElementById('indicator');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const captureCountEl = document.getElementById('captureCount');
+        
+        let capturing = false;
+        let isRunning = false;
+        let intervalId = null;
+        let captureCount = 0;
+        let stream = null;
 
-        // Start camera
-        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-            video.srcObject = stream;
-        });
+        // Start camera immediately
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 } 
+                    } 
+                });
+                video.srcObject = stream;
+                setStatus('Camera ready - Click "Start Analysis"', 'ok');
+            } catch(err) {
+                setStatus('Camera access denied: ' + err.message, 'error');
+                console.error('Camera error:', err);
+            }
+        }
+
+        function setStatus(text, type) {
+            statusEl.innerText = text;
+            statusEl.className = type ? `status-${type}` : '';
+            
+            if (type === 'ok' && isRunning) {
+                indicatorEl.className = 'indicator active';
+            } else if (type === 'error') {
+                indicatorEl.className = 'indicator inactive';
+            } else if (type === 'processing') {
+                indicatorEl.className = 'indicator active';
+            } else {
+                indicatorEl.className = 'indicator inactive';
+            }
+        }
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -48,36 +264,39 @@
         }
 
         function captureAndSend() {
+            if (capturing || !isRunning) {
+                return;
+            }
+            
+            capturing = true;
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
             const ctx = canvas.getContext('2d');
             if (!ctx || !video.videoWidth) {
-                document.getElementById('status').innerText = 'Waiting for camera...';
-                return;  // Skip if video not ready
+                setStatus('Waiting for camera...', 'processing');
+                capturing = false;
+                return;
             }
             
             ctx.drawImage(video, 0, 0);
             let base64Image;
             try {
-                // Get full data URL and keep everything after the comma
                 base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-                if (!base64Image) {
+                if (!base64Image || base64Image.length < 100) {
                     throw new Error('Failed to encode image');
                 }
-                document.getElementById('status').innerText = 'Sending frame...';
+                setStatus('Analyzing face... (Capture #' + (captureCount + 1) + ')', 'processing');
             } catch (err) {
-                document.getElementById('status').innerText = 'Failed to capture frame: ' + err.message;
+                setStatus('Capture failed: ' + err.message, 'error');
+                capturing = false;
                 return;
             }
 
-            // Log the first 100 chars of base64 for debugging
-            console.debug('Base64 preview:', base64Image.substring(0, 100));
-            
-            // Send the captured image as JSON (base64) to the backend API
             const csrftoken = getCookie('csrftoken');
-            document.getElementById('status').innerText = 'Sending to API...';
+            const startTime = Date.now();
+            
             fetch('/api/camera/', {
                 method: 'POST',
                 headers: {
@@ -86,49 +305,131 @@
                 },
                 body: JSON.stringify({ 
                     image: base64Image,
-                    timestamp: new Date().toISOString()  // Help track request timing
+                    timestamp: new Date().toISOString()
                 })
             })
             .then(res => {
-                document.getElementById('status').innerText = `Response: ${res.status} ${res.statusText}`;
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                console.log(`Response in ${elapsed}s:`, res.status);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 return res.json();
             })
             .then(data => {
-                // show raw for debugging
-                console.debug('Camera API response:', data);
+                captureCount++;
+                captureCountEl.innerText = captureCount;
+                
                 const rawEl = document.getElementById('raw');
                 if (rawEl) {
                     rawEl.innerText = `Last Response (${new Date().toLocaleTimeString()}):\n${JSON.stringify(data, null, 2)}`;
-                }                    // The backend wraps AI results as { success: True, data: { ... } }
-                    // The AI service itself returns { age, gender, emotion } directly.
-                    // Handle both shapes transparently.
-                    let payload = null;
-                    if (data && data.data) payload = data.data;
-                    else if (data && (data.age || data.gender || data.emotion)) payload = data;
+                }
 
-                    if (payload) {
-                        document.getElementById('age').innerText = payload.age ?? '-';
-                        document.getElementById('gender').innerText = payload.gender ?? '-';
-                        document.getElementById('emotion').innerText = payload.emotion ?? '-';
-                    } else if (data && data.error) {
-                        document.getElementById('age').innerText = '-';
-                        document.getElementById('gender').innerText = '-';
-                        document.getElementById('emotion').innerText = data.error;
+                let payload = null;
+                if (data && data.data) {
+                    payload = data.data;
+                } else if (data && (data.age !== undefined || data.gender || data.emotion)) {
+                    payload = data;
+                }
+
+                if (payload) {
+                    document.getElementById('age').innerText = payload.age !== null && payload.age !== undefined ? payload.age : '-';
+                    document.getElementById('gender').innerText = payload.gender || '-';
+                    document.getElementById('emotion').innerText = payload.emotion || '-';
+                    
+                    if (payload.error) {
+                        setStatus('⚠️ ' + payload.error, 'processing');
+                    } else {
+                        setStatus('✅ Analysis complete (#' + captureCount + ')', 'ok');
                     }
-                })
-                .catch(err => console.error('Camera API error', err));
+                } else if (data && data.error) {
+                    setStatus('❌ Error: ' + data.error, 'error');
+                    
+                    // Check if it's a connection error
+                    if (data.error.includes('AI service error') || data.error.includes('connection')) {
+                        document.getElementById('setupInfo').style.display = 'block';
+                    }
+                } else {
+                    setStatus('⚠️ Unexpected response', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('API error:', err);
+                setStatus('❌ Network error: ' + err.message, 'error');
+                document.getElementById('setupInfo').style.display = 'block';
+            })
+            .finally(() => {
+                capturing = false;
+            });
         }
 
-        // Wait for video to be ready before starting capture
-        video.addEventListener('loadedmetadata', () => {
-            document.getElementById('status').innerText = 'Camera ready';
-            // Send every 2 seconds
-            setInterval(captureAndSend, 2000);
+        function startAnalysis() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            document.getElementById('setupInfo').style.display = 'none';
+            
+            setStatus('Starting continuous analysis...', 'processing');
+            
+            // First capture immediately
+            setTimeout(() => {
+                captureAndSend();
+                // Then every 3 seconds
+                intervalId = setInterval(captureAndSend, 3000);
+            }, 500);
+        }
+
+        function stopAnalysis() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            capturing = false;
+            
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            setStatus('Analysis stopped', 'ok');
+        }
+
+        function restartAnalysis() {
+            // Stop current analysis
+            stopAnalysis();
+            
+            // Reset all values
+            captureCount = 0;
+            captureCountEl.innerText = '0';
+            document.getElementById('age').innerText = '-';
+            document.getElementById('gender').innerText = '-';
+            document.getElementById('emotion').innerText = '-';
+            document.getElementById('raw').innerText = '';
+            
+            setStatus('Ready to restart - Click "Start Analysis"', 'ok');
+            
+            // Restart camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            initCamera();
+        }
+
+        // Initialize camera on page load
+        window.addEventListener('load', () => {
+            initCamera();
         });
 
-        // Handle video errors
-        video.addEventListener('error', (e) => {
-            document.getElementById('status').innerText = 'Camera error: ' + (e.message || 'Unknown error');
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopAnalysis();
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         });
     </script>
 </body>
