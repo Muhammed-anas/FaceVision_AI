@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceVision AI - Live Camera</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #video { width: 60%; border: 2px solid #444; border-radius: 10px; }
+        #result-box {
+            margin-top: 20px;
+            display: inline-block;
+            text-align: left;
+            font-size: 18px;
+            border: 1px solid #999;
+            padding: 15px;
+            border-radius: 10px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎥 FaceVision AI – Live Analytics</h2>
+
+    <video id="video" autoplay></video>
+
+    <div id="result-box">
+        <p><strong>Status:</strong> <span id="status">Initializing...</span></p>
+        <p><strong>Age:</strong> <span id="age">-</span></p>
+        <p><strong>Gender:</strong> <span id="gender">-</span></p>
+        <p><strong>Emotion:</strong> <span id="emotion">-</span></p>
+        <pre id="raw" style="white-space:pre-wrap; font-size:12px; color:#555; margin-top:10px; border-top:1px solid #ccc; padding-top:10px;"></pre>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+
+        // Start camera
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+        });
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function captureAndSend() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx || !video.videoWidth) {
+                document.getElementById('status').innerText = 'Waiting for camera...';
+                return;  // Skip if video not ready
+            }
+            
+            ctx.drawImage(video, 0, 0);
+            let base64Image;
+            try {
+                // Get full data URL and keep everything after the comma
+                base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                if (!base64Image) {
+                    throw new Error('Failed to encode image');
+                }
+                document.getElementById('status').innerText = 'Sending frame...';
+            } catch (err) {
+                document.getElementById('status').innerText = 'Failed to capture frame: ' + err.message;
+                return;
+            }
+
+            // Log the first 100 chars of base64 for debugging
+            console.debug('Base64 preview:', base64Image.substring(0, 100));
+            
+            // Send the captured image as JSON (base64) to the backend API
+            const csrftoken = getCookie('csrftoken');
+            document.getElementById('status').innerText = 'Sending to API...';
+            fetch('/api/camera/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken || ''
+                },
+                body: JSON.stringify({ 
+                    image: base64Image,
+                    timestamp: new Date().toISOString()  // Help track request timing
+                })
+            })
+            .then(res => {
+                document.getElementById('status').innerText = `Response: ${res.status} ${res.statusText}`;
+                return res.json();
+            })
+            .then(data => {
+                // show raw for debugging
+                console.debug('Camera API response:', data);
+                const rawEl = document.getElementById('raw');
+                if (rawEl) {
+                    rawEl.innerText = `Last Response (${new Date().toLocaleTimeString()}):\n${JSON.stringify(data, null, 2)}`;
+                }                    // The backend wraps AI results as { success: True, data: { ... } }
+                    // The AI service itself returns { age, gender, emotion } directly.
+                    // Handle both shapes transparently.
+                    let payload = null;
+                    if (data && data.data) payload = data.data;
+                    else if (data && (data.age || data.gender || data.emotion)) payload = data;
+
+                    if (payload) {
+                        document.getElementById('age').innerText = payload.age ?? '-';
+                        document.getElementById('gender').innerText = payload.gender ?? '-';
+                        document.getElementById('emotion').innerText = payload.emotion ?? '-';
+                    } else if (data && data.error) {
+                        document.getElementById('age').innerText = '-';
+                        document.getElementById('gender').innerText = '-';
+                        document.getElementById('emotion').innerText = data.error;
+                    }
+                })
+                .catch(err => console.error('Camera API error', err));
+        }
+
+        // Wait for video to be ready before starting capture
+        video.addEventListener('loadedmetadata', () => {
+            document.getElementById('status').innerText = 'Camera ready';
+            // Send every 2 seconds
+            setInterval(captureAndSend, 2000);
+        });
+
+        // Handle video errors
+        video.addEventListener('error', (e) => {
+            document.getElementById('status').innerText = 'Camera error: ' + (e.message || 'Unknown error');
+        });
+    </script>
+</body>
+</html>
