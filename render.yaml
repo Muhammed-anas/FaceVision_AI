@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: facevision-ai
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && cd backend && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "cd backend && gunicorn main.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: main.settings
+      - key: SECRET_KEY
+        generateValue: true

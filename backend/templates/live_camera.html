@@ -21,10 +21,8 @@
             margin: 20px auto;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
+        h2 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
         #video { 
             width: 100%; 
             max-width: 640px;
@@ -49,35 +47,14 @@
             transition: all 0.3s;
             font-weight: bold;
         }
-        #startBtn {
-            background: #4CAF50;
-            color: white;
-        }
-        #startBtn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-        }
-        #stopBtn {
-            background: #f44336;
-            color: white;
-        }
-        #stopBtn:hover {
-            background: #da190b;
-            transform: translateY(-2px);
-        }
-        #restartBtn {
-            background: #ff9800;
-            color: white;
-        }
-        #restartBtn:hover {
-            background: #e68900;
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
+        #startBtn { background: #4CAF50; color: white; }
+        #startBtn:hover { background: #45a049; transform: translateY(-2px); }
+        #stopBtn { background: #f44336; color: white; }
+        #stopBtn:hover { background: #da190b; transform: translateY(-2px); }
+        #restartBtn { background: #ff9800; color: white; }
+        #restartBtn:hover { background: #e68900; transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        
         #result-box {
             margin: 20px auto;
             display: inline-block;
@@ -97,33 +74,14 @@
             padding: 10px 0;
             border-bottom: 1px solid #e0e0e0;
         }
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        .result-label {
-            font-weight: bold;
-            color: #667eea;
-        }
-        .result-value {
-            color: #333;
-            font-weight: 500;
-        }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { font-weight: bold; color: #667eea; }
+        .result-value { color: #333; font-weight: 500; }
+        
         .status-ok { color: #4CAF50; font-weight: bold; }
         .status-error { color: #f44336; font-weight: bold; }
         .status-processing { color: #ff9800; font-weight: bold; }
-        #raw {
-            white-space: pre-wrap; 
-            font-size: 11px; 
-            color: #666; 
-            margin-top: 15px; 
-            border-top: 2px solid #e0e0e0; 
-            padding-top: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-        }
+        
         .indicator {
             display: inline-block;
             width: 12px;
@@ -131,47 +89,55 @@
             border-radius: 50%;
             margin-right: 8px;
         }
-        .indicator.active {
-            background: #4CAF50;
-            animation: pulse 2s infinite;
-        }
-        .indicator.inactive {
-            background: #ccc;
-        }
+        .indicator.active { background: #4CAF50; animation: pulse 2s infinite; }
+        .indicator.inactive { background: #ccc; }
+        
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        .info-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 8px;
+        
+        .info-banner {
+            background: #e3f2fd;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
             text-align: left;
         }
-        .info-box h4 {
+        .info-banner h4 {
             margin: 0 0 10px 0;
-            color: #856404;
+            color: #1976D2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .info-box ol {
+        .info-banner p {
             margin: 5px 0;
-            padding-left: 20px;
+            color: #555;
+            font-size: 14px;
         }
+        .success-banner {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+        }
+        .success-banner h4 { color: #2e7d32; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🎥 FaceVision AI – Live Analytics</h2>
+        <p class="subtitle">Camera access happens in your browser • Images processed on server</p>
 
-        <div class="info-box" id="setupInfo">
-            <h4>⚠️ Setup Instructions:</h4>
-            <ol>
-                <li>Start AI Service: <code>cd ai_service && python manage.py runserver 8001</code></li>
-                <li>Start Main Backend: <code>cd backend && python manage.py runserver 8000</code></li>
-                <li>Allow camera access when prompted</li>
-                <li>Click "Start Analysis" button</li>
-            </ol>
+        <div class="info-banner success-banner" id="howItWorks">
+            <h4>✅ How This Works (Even on Cloud!)</h4>
+            <p><strong>Step 1:</strong> Your browser accesses YOUR camera (locally)</p>
+            <p><strong>Step 2:</strong> Captures frame and converts to image</p>
+            <p><strong>Step 3:</strong> Sends image to server for AI analysis</p>
+            <p><strong>Step 4:</strong> Server returns age, gender, emotion</p>
+            <p style="margin-top: 10px; color: #2e7d32;">
+                <strong>💡 This works whether server is local OR on Render/Railway!</strong>
+            </p>
         </div>
 
         <video id="video" autoplay playsinline muted></video>
@@ -206,7 +172,13 @@
                 <span class="result-label">Total Captures:</span>
                 <span class="result-value" id="captureCount">0</span>
             </div>
-            <pre id="raw"></pre>
+        </div>
+
+        <div class="info-banner" id="techInfo" style="display: none;">
+            <h4>🔧 Technical Details</h4>
+            <p><strong>Server URL:</strong> <span id="serverUrl">-</span></p>
+            <p><strong>Camera Resolution:</strong> <span id="resolution">-</span></p>
+            <p><strong>Average Response Time:</strong> <span id="avgTime">-</span></p>
         </div>
     </div>
 
@@ -223,10 +195,12 @@
         let intervalId = null;
         let captureCount = 0;
         let stream = null;
+        let responseTimes = [];
 
-        // Start camera immediately
+        // Initialize camera when page loads
         async function initCamera() {
             try {
+                // Request camera access - THIS RUNS IN YOUR BROWSER, NOT ON SERVER!
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         width: { ideal: 640 }, 
@@ -235,9 +209,17 @@
                 });
                 video.srcObject = stream;
                 setStatus('Camera ready - Click "Start Analysis"', 'ok');
+                
+                // Show resolution
+                video.addEventListener('loadedmetadata', () => {
+                    document.getElementById('resolution').textContent = 
+                        `${video.videoWidth}x${video.videoHeight}`;
+                });
+                
             } catch(err) {
                 setStatus('Camera access denied: ' + err.message, 'error');
                 console.error('Camera error:', err);
+                alert('⚠️ Please allow camera access for this site to work!');
             }
         }
 
@@ -264,9 +246,7 @@
         }
 
         function captureAndSend() {
-            if (capturing || !isRunning) {
-                return;
-            }
+            if (capturing || !isRunning) return;
             
             capturing = true;
             const canvas = document.createElement('canvas');
@@ -280,14 +260,17 @@
                 return;
             }
             
+            // CAPTURE FROM LOCAL CAMERA (in browser)
             ctx.drawImage(video, 0, 0);
+            
             let base64Image;
             try {
+                // Convert to base64 image
                 base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
                 if (!base64Image || base64Image.length < 100) {
                     throw new Error('Failed to encode image');
                 }
-                setStatus('Analyzing face... (Capture #' + (captureCount + 1) + ')', 'processing');
+                setStatus('Sending to server... (#' + (captureCount + 1) + ')', 'processing');
             } catch (err) {
                 setStatus('Capture failed: ' + err.message, 'error');
                 capturing = false;
@@ -297,6 +280,11 @@
             const csrftoken = getCookie('csrftoken');
             const startTime = Date.now();
             
+            // Get current server URL
+            const serverUrl = window.location.origin;
+            document.getElementById('serverUrl').textContent = serverUrl;
+            
+            // SEND IMAGE TO SERVER (can be local OR cloud)
             fetch('/api/camera/', {
                 method: 'POST',
                 headers: {
@@ -309,8 +297,15 @@
                 })
             })
             .then(res => {
-                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                console.log(`Response in ${elapsed}s:`, res.status);
+                const elapsed = Date.now() - startTime;
+                responseTimes.push(elapsed);
+                
+                // Calculate average
+                const avg = responseTimes.reduce((a,b) => a+b, 0) / responseTimes.length;
+                document.getElementById('avgTime').textContent = `${(avg/1000).toFixed(2)}s`;
+                document.getElementById('techInfo').style.display = 'block';
+                
+                console.log(`Response in ${(elapsed/1000).toFixed(1)}s:`, res.status);
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 }
@@ -319,11 +314,6 @@
             .then(data => {
                 captureCount++;
                 captureCountEl.innerText = captureCount;
-                
-                const rawEl = document.getElementById('raw');
-                if (rawEl) {
-                    rawEl.innerText = `Last Response (${new Date().toLocaleTimeString()}):\n${JSON.stringify(data, null, 2)}`;
-                }
 
                 let payload = null;
                 if (data && data.data) {
@@ -333,7 +323,8 @@
                 }
 
                 if (payload) {
-                    document.getElementById('age').innerText = payload.age !== null && payload.age !== undefined ? payload.age : '-';
+                    document.getElementById('age').innerText = 
+                        payload.age !== null && payload.age !== undefined ? payload.age : '-';
                     document.getElementById('gender').innerText = payload.gender || '-';
                     document.getElementById('emotion').innerText = payload.emotion || '-';
                     
@@ -344,19 +335,13 @@
                     }
                 } else if (data && data.error) {
                     setStatus('❌ Error: ' + data.error, 'error');
-                    
-                    // Check if it's a connection error
-                    if (data.error.includes('AI service error') || data.error.includes('connection')) {
-                        document.getElementById('setupInfo').style.display = 'block';
-                    }
                 } else {
                     setStatus('⚠️ Unexpected response', 'error');
                 }
             })
             .catch(err => {
                 console.error('API error:', err);
-                setStatus('❌ Network error: ' + err.message, 'error');
-                document.getElementById('setupInfo').style.display = 'block';
+                setStatus('❌ Server error: ' + err.message, 'error');
             })
             .finally(() => {
                 capturing = false;
@@ -369,14 +354,11 @@
             isRunning = true;
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            document.getElementById('setupInfo').style.display = 'none';
             
             setStatus('Starting continuous analysis...', 'processing');
             
-            // First capture immediately
             setTimeout(() => {
                 captureAndSend();
-                // Then every 3 seconds
                 intervalId = setInterval(captureAndSend, 3000);
             }, 500);
         }
@@ -394,37 +376,34 @@
             
             startBtn.disabled = false;
             stopBtn.disabled = true;
-            
             setStatus('Analysis stopped', 'ok');
         }
 
         function restartAnalysis() {
-            // Stop current analysis
             stopAnalysis();
             
-            // Reset all values
             captureCount = 0;
+            responseTimes = [];
             captureCountEl.innerText = '0';
             document.getElementById('age').innerText = '-';
             document.getElementById('gender').innerText = '-';
             document.getElementById('emotion').innerText = '-';
-            document.getElementById('raw').innerText = '';
+            document.getElementById('avgTime').innerText = '-';
             
-            setStatus('Ready to restart - Click "Start Analysis"', 'ok');
+            setStatus('Ready to restart', 'ok');
             
-            // Restart camera
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
             initCamera();
         }
 
-        // Initialize camera on page load
+        // Start camera immediately on page load
         window.addEventListener('load', () => {
             initCamera();
         });
 
-        // Cleanup on page unload
+        // Cleanup
         window.addEventListener('beforeunload', () => {
             stopAnalysis();
             if (stream) {

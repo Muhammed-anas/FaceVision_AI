@@ -1,0 +1,12 @@
+deepface>=0.0.95
+django>=5.2.7
+django-cors-headers>=4.9.0
+djangorestframework>=3.16.1
+numpy>=2.2.6
+opencv-python-headless>=4.11.0.86
+pillow>=12.0.0
+python-dotenv>=1.2.1
+tf-keras>=2.20.1
+tensorflow>=2.20.0
+gunicorn>=21.2.0
+whitenoise>=6.6.0
